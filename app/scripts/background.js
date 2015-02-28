@@ -84,9 +84,12 @@ var JenkinsJob = (function(){
 
   klass.remove = function(jenkinsUrl, jobName){
     var key = generateKey(jenkinsUrl, jobName);
-    chrome.alarms.clear(key);
-    delete JobCache[key];
-    chrome.storage.local.remove(key);
+    return new Promise(function(resolve, reject){
+      chrome.alarms.clear(key);
+      delete JobCache[key];
+      chrome.storage.local.remove(key);
+      resolve();
+    });
   };
 
   function BuildStatus(number, result){
