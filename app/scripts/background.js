@@ -61,18 +61,20 @@ var JenkinsJob = (function(){
       }
     });
   };
-  klass.all = function(callback){
+  klass.all = function(){
     var self = this;
     // TODO should get from cache?
-    chrome.storage.local.get(function(items){
-      var jobs = []
-      for(var key in items){
-        if(isJobKey(key)){
-          var item = items[key];
-          jobs.push(new self(item.jenkinsUrl, item.jobName));
+    return new Promise(function(resolve, reject){
+      chrome.storage.local.get(function(items){
+        var jobs = []
+        for(var key in items){
+          if(isJobKey(key)){
+            var item = items[key];
+            jobs.push(new self(item.jenkinsUrl, item.jobName));
+          }
         }
-      }
-      callback(jobs);
+        resolve(jobs);
+      });
     });
   };
 
