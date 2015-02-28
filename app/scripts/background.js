@@ -33,12 +33,16 @@ var JenkinsJob = (function(){
     var key = generateKey(jenkinsUrl, jobName)
     var item = {};
     item[key] = jobInfo;
-    // TODO validation.
+    var self = this;
 
-    chrome.storage.local.set(item, function(){
-      chrome.alarms.create(key, {periodInMinutes: 1});
+    return new Promise(function(resolve, reject){
+      // TODO validation.
+      // when fail, exec reject function.
+      chrome.storage.local.set(item, function(){
+        chrome.alarms.create(key, {periodInMinutes: 1});
+      });
+      resolve(JobCache[key] = new self(jenkinsUrl, jobName));
     });
-    JobCache[key] = new this(jenkinsUrl, jobName);
   }
   
   klass.find = function(jenkinsUrl, jobName){
