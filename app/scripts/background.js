@@ -195,3 +195,29 @@ var JenkinsJob = (function(){
   
   return klass;
 })();
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
+  console.log(request)
+  var errorHandling = function(){sendResponse({state: false, result: arguments})};
+  switch(request.action){
+      case "read":
+        var readed = function(jobs){sendResponse({state: true, result: jobs});};
+        JenkinsJob.all().then(readed, errorHandling);
+        return true;
+        break;
+      case "create":
+        var throwConflict = function(item){throw new Error("Conflict");};
+        var addAction = function(){return JenkinsJob.add(request.data.jenkinsUrl, request.data.jobName);};
+        var added = function(job){sendResponse({state: true, result: job});};
+        JenkinsJob.find(request.data.jenkinsUrl, request.data.jobName)
+          .then(throwConflict, addAction).then(added, errorHandling);
+        return true;
+        break;
+      case "delete":
+        var deleted = function(){sendResponse({state: true});};
+        JenkinsJob.remove(request.data.jenkinsUrl, request.data.jobName).then(deleted, errorHandling);
+
+        return true;
+        break;
+  }
+});

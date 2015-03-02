@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "manifest_version": 2,
   "description": "Jenkins Collection",
+  "content_security_policy": "script-src 'self' https://maxcdn.bootstrapcdn.com/ https://code.jquery.com/; object-src 'self'",
   "browser_action": {
     "default_popup": "options.html"
   },
@@ -11,6 +12,7 @@
           "scripts/background.js"
       ]
   },
+  "options_page": "options.html",
   "permissions": [
       "notifications",
       "alarms",

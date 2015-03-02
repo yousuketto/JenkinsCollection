@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Jenkins Collection</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    
+    <script src="scripts/vendor/underscore.js"></script>
+    <script src="scripts/vendor/backbone.js"></script>
+    <script src="scripts/options.js"></script>
+    <style>
+      body{min-width: 300px}
+      .list-group-item.has-right-item {
+        position: relative;
+        padding-right: 40px;
+      }
+      .list-group-item.has-right-item .right-item{
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: block;
+        width: 40px;
+        height: 40px;
+        line-height: 40px;
+        text-align: center;
+      }
+      .delete:hover{cursor: pointer}
+    </style>
+  </head>
+  <body id="jenkins-collection-app">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-12 col-xs-12" id="jenkins-job-list">
+          <ul class="list-group">
+          </ul>
+          <div id="empty-message">Empty...</li>
+        </div>
+      </div>
+      <div class="addition">
+        <div class="form-inline">
+          <input type="text" class="form-control" id="jenkins-url" placeholder="http://your-jenkins.example.com/">
+          <input type="text" class="form-control" id="job-name"  placeholder="job-name">
+          <div class="add btn"><span class="glyphicon glyphicon-plus"></span>Add Job</div>
+        </div>
+      </div>
+
+    </div>
+  </body>
+</html>
