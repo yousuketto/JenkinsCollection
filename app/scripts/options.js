@@ -27,7 +27,30 @@ $(function(){
 
   // Job Model
   var Job = Backbone.Model.extend({
-    url: function(){return _.extend({id: this.id}, _.result(this.collection, 'url', {}))}
+    url: function(){return _.extend({id: this.id}, _.result(this.collection, 'url', {}))},
+    validate: function(attrs, options){
+      var result = {}
+      if(!attrs.jenkinsUrl || !attrs.jenkinsUrl.trim().length) {
+        result.jenkinsUrl = result.jenkinsUrl || [];
+        result.jenkinsUrl.push("Jenkins url is blank.");
+      }
+      if(attrs.jenkinsUrl && !/^https?:\/\//.test(attrs.jenkinsUrl)){
+        result.jenkinsUrl = result.jenkinsUrl || [];
+        result.jenkinsUrl.push("Jenkins url should be only URL format.");
+      }
+
+      if(!attrs.jobName || !attrs.jobName.trim().length) {
+        result.jobName = result.jobName || [];
+        result.jobName.push("Job Name is blank.");
+      }
+
+      if(attrs.jobName && attrs.jobName.indexOf("/") >= 0) {
+        result.jobName = result.jobName || [];
+        result.jobName.push("Job Name should not include '/'.");
+      }
+
+      return Object.keys(result).length ? result : null;
+    }
   });
   var JobList = Backbone.Collection.extend({
     model: Job,
@@ -91,9 +114,23 @@ $(function(){
       Jobs.each(this.addOne, this);
     },
     create: function(){
-      Jobs.create({jenkinsUrl: this.$jenkinsUrl.val(), jobName: this.$jobName.val()}, {wait: true});
+      var model = Jobs.create({jenkinsUrl: this.$jenkinsUrl.val(), jobName: this.$jobName.val()}, {wait: true});
+      this.showCreateResult(model);
       this.$jenkinsUrl.val('');
       this.$jobName.val('');
+    },
+    showCreateResult: function(model){
+      var messageField = this.$("#validation-message");
+      var ul = messageField.find("ul");
+      messageField.hide();
+      ul.html('');
+
+      if(model.validationError) {
+        var messages = _.flatten(_.values(model.validationError));
+        messages = messages.map(function(message){return $("<li>" + message + "</li>")});
+        _.each(messages, function(message){ul.append(message)})
+        messageField.show();
+      }
     }
   });
   var App = new AppView;
