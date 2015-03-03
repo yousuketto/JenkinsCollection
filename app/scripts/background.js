@@ -4,11 +4,6 @@ var JenkinsJob = (function(){
   function generateKey(jenkinsUrl, jobName){
     return JOB_PREFIX + JSON.stringify({jenkinsUrl: jenkinsUrl, jobName: jobName});
   }
-  function parseKey(key){
-    if(isJobKey(key)){
-      return JSON.parse(key.substring(JOB_PREFIX.length));
-    }
-  }
   function isJobKey(key){
     return key.substring(0, JOB_PREFIX.length) === JOB_PREFIX
   }
@@ -20,8 +15,7 @@ var JenkinsJob = (function(){
   };
   chrome.alarms.onAlarm.addListener(function(alarm){
     if(isJobKey(alarm.name)){
-      var searchOption = parseKey(alarm.name);
-      JenkinsJob.find(searchOption.jenkinsUrl, searchOption.jobName)
+      JenkinsJob.find(alarm.name)
         .then(function(job){job.pullStatus();}).catch(Utils.log);
     }
   });
@@ -29,25 +23,25 @@ var JenkinsJob = (function(){
   var JobCache = {};
 
   klass.add = function(jenkinsUrl, jobName){
-    var jobInfo = {jenkinsUrl: jenkinsUrl, jobName: jobName};
-    var key = generateKey(jenkinsUrl, jobName)
+    var job = new this(jenkinsUrl, jobName);
     var item = {};
-    item[key] = jobInfo;
-    var self = this;
+    item[job.id] = job;
 
-    return new Promise(function(resolve, reject){
-      // TODO validation.
-      // when fail, exec reject function.
-      chrome.storage.local.set(item, function(){
-        chrome.alarms.create(key, {periodInMinutes: 1});
+    var throwConflict = function(){throw new Error("Conflict");};
+    return this.find(job.id).then(throwConflict, function(){
+      return new Promise(function(resolve, reject){
+        // TODO validation.
+        // when fail, exec reject function.
+        chrome.storage.local.set(item, function(){
+          chrome.alarms.create(job.key, {periodInMinutes: 1});
+        });
+        resolve(JobCache[job.key] = job);
       });
-      resolve(JobCache[key] = new self(jenkinsUrl, jobName));
     });
   }
   
-  klass.find = function(jenkinsUrl, jobName){
+  klass.find = function(key){
     var self = this;
-    var key = generateKey(jenkinsUrl, jobName);
     return new Promise(function(resolve, reject){
       if(JobCache[key]){
         resolve(JobCache[key]);
@@ -82,8 +76,7 @@ var JenkinsJob = (function(){
     });
   };
 
-  klass.remove = function(jenkinsUrl, jobName){
-    var key = generateKey(jenkinsUrl, jobName);
+  klass.remove = function(key){
     return new Promise(function(resolve, reject){
       chrome.alarms.clear(key);
       delete JobCache[key];
@@ -206,16 +199,13 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
         return true;
         break;
       case "create":
-        var throwConflict = function(item){throw new Error("Conflict");};
-        var addAction = function(){return JenkinsJob.add(request.data.jenkinsUrl, request.data.jobName);};
         var added = function(job){sendResponse({state: true, result: job});};
-        JenkinsJob.find(request.data.jenkinsUrl, request.data.jobName)
-          .then(throwConflict, addAction).then(added, errorHandling);
+        JenkinsJob.add(request.data.jenkinsUrl, request.data.jobName).then(added, errorHandling);
         return true;
         break;
       case "delete":
         var deleted = function(){sendResponse({state: true});};
-        JenkinsJob.remove(request.data.jenkinsUrl, request.data.jobName).then(deleted, errorHandling);
+        JenkinsJob.remove(request.data.id).then(deleted, errorHandling);
 
         return true;
         break;
