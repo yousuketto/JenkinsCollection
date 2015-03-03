@@ -4,11 +4,6 @@ var JenkinsJob = (function(){
   function generateKey(jenkinsUrl, jobName){
     return JOB_PREFIX + JSON.stringify({jenkinsUrl: jenkinsUrl, jobName: jobName});
   }
-  function parseKey(key){
-    if(isJobKey(key)){
-      return JSON.parse(key.substring(JOB_PREFIX.length));
-    }
-  }
   function isJobKey(key){
     return key.substring(0, JOB_PREFIX.length) === JOB_PREFIX
   }
@@ -20,8 +15,7 @@ var JenkinsJob = (function(){
   };
   chrome.alarms.onAlarm.addListener(function(alarm){
     if(isJobKey(alarm.name)){
-      var searchOption = parseKey(alarm.name);
-      JenkinsJob.find(searchOption.jenkinsUrl, searchOption.jobName)
+      JenkinsJob.find(alarm.name)
         .then(function(job){job.pullStatus();}).catch(Utils.log);
     }
   });
@@ -34,7 +28,7 @@ var JenkinsJob = (function(){
     item[job.id] = job;
 
     var throwConflict = function(){throw new Error("Conflict");};
-    return this.find(jenkinsUrl, jobName).then(throwConflict, function(){
+    return this.find(job.id).then(throwConflict, function(){
       return new Promise(function(resolve, reject){
         // TODO validation.
         // when fail, exec reject function.
@@ -46,9 +40,8 @@ var JenkinsJob = (function(){
     });
   }
   
-  klass.find = function(jenkinsUrl, jobName){
+  klass.find = function(key){
     var self = this;
-    var key = generateKey(jenkinsUrl, jobName);
     return new Promise(function(resolve, reject){
       if(JobCache[key]){
         resolve(JobCache[key]);
