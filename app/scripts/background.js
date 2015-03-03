@@ -33,13 +33,16 @@ var JenkinsJob = (function(){
     var item = {};
     item[job.id] = job;
 
-    return new Promise(function(resolve, reject){
-      // TODO validation.
-      // when fail, exec reject function.
-      chrome.storage.local.set(item, function(){
-        chrome.alarms.create(job.key, {periodInMinutes: 1});
+    var throwConflict = function(){throw new Error("Conflict");};
+    return this.find(jenkinsUrl, jobName).then(throwConflict, function(){
+      return new Promise(function(resolve, reject){
+        // TODO validation.
+        // when fail, exec reject function.
+        chrome.storage.local.set(item, function(){
+          chrome.alarms.create(job.key, {periodInMinutes: 1});
+        });
+        resolve(JobCache[job.key] = job);
       });
-      resolve(JobCache[job.key] = job);
     });
   }
   
@@ -203,11 +206,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
         return true;
         break;
       case "create":
-        var throwConflict = function(item){throw new Error("Conflict");};
-        var addAction = function(){return JenkinsJob.add(request.data.jenkinsUrl, request.data.jobName);};
         var added = function(job){sendResponse({state: true, result: job});};
-        JenkinsJob.find(request.data.jenkinsUrl, request.data.jobName)
-          .then(throwConflict, addAction).then(added, errorHandling);
+        JenkinsJob.add(request.data.jenkinsUrl, request.data.jobName).then(added, errorHandling);
         return true;
         break;
       case "delete":
