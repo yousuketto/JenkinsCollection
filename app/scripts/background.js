@@ -80,8 +80,7 @@ var JenkinsJob = (function(){
     });
   };
 
-  klass.remove = function(jenkinsUrl, jobName){
-    var key = generateKey(jenkinsUrl, jobName);
+  klass.remove = function(key){
     return new Promise(function(resolve, reject){
       chrome.alarms.clear(key);
       delete JobCache[key];
@@ -213,7 +212,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
         break;
       case "delete":
         var deleted = function(){sendResponse({state: true});};
-        JenkinsJob.remove(request.data.jenkinsUrl, request.data.jobName).then(deleted, errorHandling);
+        JenkinsJob.remove(request.data.id).then(deleted, errorHandling);
 
         return true;
         break;
