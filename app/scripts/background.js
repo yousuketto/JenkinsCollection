@@ -33,7 +33,7 @@ var JenkinsJob = (function(){
         // TODO validation.
         // when fail, exec reject function.
         chrome.storage.local.set(item, function(){
-          chrome.alarms.create(job.key, {periodInMinutes: 1});
+          chrome.alarms.create(job.id, {periodInMinutes: 1});
         });
         resolve(JobCache[job.key] = job);
       });
