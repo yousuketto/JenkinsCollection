@@ -9,6 +9,10 @@ var JenkinsJob = (function(){
   }
 
   var klass = function JenkinsJob(jenkinsUrl, jobName){
+    jenkinsUrl = jenkinsUrl.trim();
+    jobName = jobName.trim();
+    jenkinsUrl = jenkinsUrl.slice(-1) === "/" ? jenkinsUrl : jenkinsUrl + "/";
+
     this.id = generateKey(jenkinsUrl, jobName);
     this.jenkinsUrl = jenkinsUrl;
     this.jobName = jobName;
