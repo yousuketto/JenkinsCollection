@@ -61,9 +61,12 @@ $(function(){
   var JobView = Backbone.View.extend({
     tagName: "li",
     template: function(model) {
-      var jobNameTag = '<span class="job-name">' + model.jobName + '</span>'
+      var url = model.jenkinsUrl + "job/" + model.jobName
+      var jenkinsUrlTag = '<span class="jenkins-url">' + model.jenkinsUrl + '</span>'
+      var withUrlJobName = '<a target="_blank" href="' + url + '">' + model.jobName + '</a>'
+      var jobNameTag = '<span class="job-name">' + withUrlJobName + '</span>'
       var removeButton = '<span class="right-item glyphicon glyphicon-trash delete"></span>'
-      var html = jobNameTag + removeButton;
+      var html = jenkinsUrlTag + jobNameTag + removeButton;
       
       return html
     },
