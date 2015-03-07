@@ -88,7 +88,7 @@ $(function(){
   var CreateForm = Backbone.View.extend({
     el: $("#create-form"),
     events: {
-      "click .add": "create",
+      "keypress input": "createOnEnter",
       "click .open-btn": "open",
       "click .close-btn": "close"
     },
@@ -98,6 +98,7 @@ $(function(){
       this.$messageField = this.$("#validation-message");
       this.$fields = this.$(".form-inline");
     },
+    createOnEnter: function(e){if (e.keyCode == 13) this.create();},
     create: function(){
       var model = Jobs.create({
         jenkinsUrl: this.$jenkinsUrl.val(),
