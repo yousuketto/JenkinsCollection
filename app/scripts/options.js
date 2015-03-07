@@ -88,12 +88,15 @@ $(function(){
   var CreateForm = Backbone.View.extend({
     el: $("#create-form"),
     events: {
-      "click .add": "create"
+      "click .add": "create",
+      "click .open-btn": "open",
+      "click .close-btn": "close"
     },
     initialize: function() {
       this.$jenkinsUrl = this.$("#jenkins-url");
       this.$jobName = this.$("#job-name");
       this.$messageField = this.$("#validation-message");
+      this.$fields = this.$(".form-inline");
     },
     create: function(){
       var model = Jobs.create({
@@ -114,6 +117,16 @@ $(function(){
         this.$jenkinsUrl.val('');
         this.$jobName.val('');
       }
+    },
+    open: function(){
+      this.$el.removeClass("closed");
+      this.$el.addClass("opened");
+      this.$fields.show(300);
+    },
+    close: function(){
+      this.$el.removeClass("opened");
+      this.$el.addClass("closed");
+      this.$fields.hide(300);
     }
   });
 

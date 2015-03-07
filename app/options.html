@@ -25,8 +25,13 @@
         line-height: 40px;
         text-align: center;
       }
-      .delete:hover{cursor: pointer}
+      .delete{cursor: pointer;transition: color 0.25s linear}
+      .delete:not(:hover){color: #aaa}
       #validation-message{display:none}
+      #create-form .open-btn, #create-form .close-btn{cursor: pointer}
+      #create-form:not(.closed) .open-btn,
+      #create-form:not(.opened) .close-btn {display:none;}
+      #create-form .form-inline{display:none}
     </style>
   </head>
   <body id="jenkins-collection-app">
@@ -34,10 +39,11 @@
       <div id="jenkins-job-list">
         <ul class="list-group">
         </ul>
-        <div id="empty-message">Empty...</li>
+        <div id="empty-message">Empty...</div>
       </div>
-      <hr>
-      <div id="create-form">
+      <div id="create-form" class="closed">
+        <span class="glyphicon glyphicon-chevron-down open-btn"></span>
+        <span class="glyphicon glyphicon-chevron-up close-btn"></span>
         <div class="form-inline">
           <div class="panel panel-danger" id="validation-message" >
             <div class="panel-heading">
