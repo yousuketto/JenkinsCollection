@@ -34,6 +34,11 @@ var JenkinsJob = (function(){
     var throwConflict = function(){throw new Error("Conflict");};
     return this.find(job.id).then(throwConflict, function(){
       return new Promise(function(resolve, reject){
+        var validResult = job.validate();
+        if(validResult){
+          reject(Error(JSON.stringify({validationResult: validResult})));
+          return;
+        }
         // TODO validation.
         // when fail, exec reject function.
         chrome.storage.local.set(item, function(){
@@ -42,6 +47,29 @@ var JenkinsJob = (function(){
         resolve(JobCache[job.key] = job);
       });
     });
+  }
+  klass.prototype.validate = function(){
+    var result = {}
+    if(!this.jenkinsUrl || !this.jenkinsUrl.trim().length) {
+      result.jenkinsUrl = result.jenkinsUrl || [];
+      result.jenkinsUrl.push("Jenkins url is blank.");
+    }
+    if(this.jenkinsUrl && !/^https?:\/\//.test(this.jenkinsUrl)){
+      result.jenkinsUrl = result.jenkinsUrl || [];
+      result.jenkinsUrl.push("Jenkins url should be only URL format.");
+    }
+
+    if(!this.jobName || !this.jobName.trim().length) {
+      result.jobName = result.jobName || [];
+      result.jobName.push("Job Name is blank.");
+    }
+
+    if(this.jobName && this.jobName.indexOf("/") >= 0) {
+      result.jobName = result.jobName || [];
+      result.jobName.push("Job Name should not include '/'.");
+    }
+
+    return Object.keys(result).length ? result : null;
   }
   
   klass.find = function(key){
