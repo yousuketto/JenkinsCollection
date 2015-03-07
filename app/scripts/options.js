@@ -84,18 +84,46 @@ $(function(){
       this.model.destroy();
     }
   });
-  
-  var AppView = Backbone.View.extend({
-    el: $("#jenkins-collection-app"),
+
+  var CreateForm = Backbone.View.extend({
+    el: $("#create-form"),
     events: {
       "click .add": "create"
     },
     initialize: function() {
       this.$jenkinsUrl = this.$("#jenkins-url");
       this.$jobName = this.$("#job-name");
+      this.$messageField = this.$("#validation-message");
+    },
+    create: function(){
+      var model = Jobs.create({
+        jenkinsUrl: this.$jenkinsUrl.val(),
+        jobName: this.$jobName.val()
+      }, {wait: true});
+
+      var ul = this.$messageField.find("ul");
+      this.$messageField.hide();
+      ul.html('');
+
+      if(model.validationError) {
+        var messages = _.flatten(_.values(model.validationError));
+        messages = messages.map(function(message){return $("<li>" + message + "</li>")});
+        _.each(messages, function(message){ul.append(message)})
+        this.$messageField.show();
+      } else {
+        this.$jenkinsUrl.val('');
+        this.$jobName.val('');
+      }
+    }
+  });
+
+  var AppView = Backbone.View.extend({
+    el: $("#jenkins-collection-app"),
+    initialize: function() {
       this.listenTo(Jobs, 'add', this.addOne);
       this.listenTo(Jobs, 'reset', this.addAll);
       this.listenTo(Jobs, 'all', this.render);
+      this.createForm = new CreateForm;
       
       Jobs.fetch();
     },
@@ -113,25 +141,6 @@ $(function(){
     addAll: function() {
       Jobs.each(this.addOne, this);
     },
-    create: function(){
-      var model = Jobs.create({jenkinsUrl: this.$jenkinsUrl.val(), jobName: this.$jobName.val()}, {wait: true});
-      this.showCreateResult(model);
-      this.$jenkinsUrl.val('');
-      this.$jobName.val('');
-    },
-    showCreateResult: function(model){
-      var messageField = this.$("#validation-message");
-      var ul = messageField.find("ul");
-      messageField.hide();
-      ul.html('');
-
-      if(model.validationError) {
-        var messages = _.flatten(_.values(model.validationError));
-        messages = messages.map(function(message){return $("<li>" + message + "</li>")});
-        _.each(messages, function(message){ul.append(message)})
-        messageField.show();
-      }
-    }
   });
   var App = new AppView;
 });
