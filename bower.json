@@ -1,0 +1,7 @@
+{
+  "name": "Jenkins Collection",
+  "dependencies": {
+    "bootstrap": "~3.3.4",
+    "backbone": "~1.2.0"
+  }
+}
