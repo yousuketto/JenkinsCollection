@@ -4,10 +4,12 @@ var gulp = require('gulp'),
     gulpif = require('gulp-if'),
     sass = require('gulp-ruby-sass'),
     jade = require('gulp-jade'),
+    babel = require('gulp-babel'),
     del = require('del');
 
 var vendor_components_dir = "./app/vendor_components";
 var styles_dir = "./app/styles";
+var scripts_dir = "./app/scripts";
 var regJsfile = /\.js/;
 
 gulp.task("clean:styles", function(cb){
@@ -35,4 +37,11 @@ gulp.task("clean:html", function(cb){
 });
 gulp.task("html", ["clean:html"], function(){
   return gulp.src("src/*.jade").pipe(jade({locals: {}})).pipe(gulp.dest("./app"))
+});
+
+gulp.task("clean:scripts", function(cb){
+  del([scripts_dir], cb);
+});
+gulp.task("scripts", ["clean:scripts"], function(){
+  return gulp.src("src/*.js").pipe(babel()).pipe(gulp.dest(scripts_dir));
 });
