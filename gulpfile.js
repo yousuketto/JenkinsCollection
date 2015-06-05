@@ -3,6 +3,7 @@ var gulp = require('gulp'),
     concat = require('gulp-concat'),
     gulpif = require('gulp-if'),
     sass = require('gulp-ruby-sass'),
+    jade = require('gulp-jade'),
     del = require('del');
 
 var vendor_components_dir = "./app/vendor_components";
@@ -27,4 +28,11 @@ gulp.task("vendor-files", ["clean:vendor-files"], function(){
     return gulp.src(mainBowerFiles(), {base: "bower_components"})
     .pipe(gulpif(function(file){return regJsfile.exec(file.path);}, concat('vendor.js')))
     .pipe(gulp.dest(vendor_components_dir));
+});
+
+gulp.task("clean:html", function(cb){
+  del(["./app/*.html"], cb);
+});
+gulp.task("html", ["clean:html"], function(){
+  return gulp.src("src/*.jade").pipe(jade({locals: {}})).pipe(gulp.dest("./app"))
 });
