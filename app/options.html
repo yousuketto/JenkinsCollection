@@ -3,35 +3,9 @@
   <head>
     <title>Jenkins Collection</title>
     <link rel="stylesheet" href="vendor_components/bootstrap/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="styles/options.css">
     <script src="vendor_components/vendor.js"></script>
     <script src="scripts/options.js"></script>
-    <style>
-      body{min-width: 300px}
-      .list-group-item.has-right-item {
-        position: relative;
-        padding-right: 40px;
-      }
-      .list-group-item.has-right-item .right-item{
-        position: absolute;
-        top: 0;
-        right: 0;
-        display: block;
-        width: 40px;
-        height: 40px;
-        line-height: 40px;
-        text-align: center;
-      }
-      .jenkins-url{font-size: 8px; color: #aaa;display:block}
-      .job-name{display:block}
-      .job-name a{color: #333}
-      .delete{cursor: pointer;transition: color 0.25s linear}
-      .delete:not(:hover){color: #aaa}
-      #validation-message{display:none}
-      #create-form .open-btn, #create-form .close-btn{cursor: pointer}
-      #create-form:not(.closed) .open-btn,
-      #create-form:not(.opened) .close-btn {display:none;}
-      #create-form .form-inline{display:none}
-    </style>
   </head>
   <body id="jenkins-collection-app">
     <div class="container-fluid">
