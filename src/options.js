@@ -57,7 +57,7 @@ $(function(){
     url: {target: "jobs"}
   });
   var Jobs = new JobList;
-  
+
   var JobView = Backbone.View.extend({
     tagName: "li",
     template: function(model) {
@@ -67,7 +67,7 @@ $(function(){
       var jobNameTag = '<span class="job-name">' + withUrlJobName + '</span>'
       var removeButton = '<span class="right-item glyphicon glyphicon-trash delete"></span>'
       var html = jenkinsUrlTag + jobNameTag + removeButton;
-      
+
       return html
     },
     events: {
@@ -141,7 +141,7 @@ $(function(){
       this.listenTo(Jobs, 'reset', this.addAll);
       this.listenTo(Jobs, 'all', this.render);
       this.createForm = new CreateForm;
-      
+
       Jobs.fetch();
     },
     render: function() {

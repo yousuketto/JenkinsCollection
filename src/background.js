@@ -71,7 +71,7 @@ var JenkinsJob = (function(){
 
     return Object.keys(result).length ? result : null;
   }
-  
+
   klass.find = function(key){
     var self = this;
     return new Promise(function(resolve, reject){
@@ -185,7 +185,7 @@ var JenkinsJob = (function(){
       var notifyTargets = []
       if(lastBuild && !lastBuild.isEq(oldLastBuild)) {
         notifyTargets.push(lastBuild);
-        
+
         if(lastCompletedBuild && !lastBuild.isEq(lastCompletedBuild) && !lastCompletedBuild.isEq(oldLastCompletedBuild)){
           notifyTargets.push(lastCompletedBuild);
         }
@@ -194,7 +194,7 @@ var JenkinsJob = (function(){
     }
     Utils.Xhr.get(apiUrl).then(JSON.parse, Utils.log).then(success_callback);
   };
-  
+
   var Utils = {}
   Utils.log = function(){
     Array.prototype.slice.call(arguments).forEach(function(_){console.log(_)});
@@ -217,7 +217,7 @@ var JenkinsJob = (function(){
       req.send();
     });
   }
-  
+
   return klass;
 })();
 
