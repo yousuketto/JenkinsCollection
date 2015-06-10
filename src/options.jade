@@ -1,0 +1,24 @@
+doctype html
+html
+  head
+    title Jenkins Collection
+    link(rel="stylesheet" href="vendor_components/bootstrap/dist/css/bootstrap.css")
+    link(rel="stylesheet" href="styles/options.css")
+    script(src="vendor_components/vendor.js")
+    script(src="scripts/options.js")
+  body#jenkins-collection-app
+    .container-fluid
+      #jenkins-job-list
+        ul.list-group
+        #empty-message Empty...
+      #create-form.closed
+        span.glyphicon.glyphicon-chevron-down.open-btn
+        span.glyphicon.glyphicon-chevron-up.close-btn
+        .form-inline
+          .panel.panel-danger#validation-message
+            .panel-heading
+              h3.panel-title Validation Error.
+            .panel-body
+              ul
+          input.form-control#jenkins-url(type="text" placeholder="http://your-jenkins.example.com/")
+          input.form-control#job-name(type="text" placeholder="job-name")
