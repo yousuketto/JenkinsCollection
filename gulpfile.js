@@ -63,7 +63,7 @@ gulp.task("clean:scripts", function(cb){
   del([scripts_dir], cb);
 });
 gulp.task("scripts", ["clean:scripts"], function(){
-  return gulp.src("src/**/*.js").pipe(babelify_compiler()).pipe(gulp.dest(scripts_dir));
+  return gulp.src("src/*.js").pipe(babelify_compiler()).pipe(gulp.dest(scripts_dir));
 });
 
 gulp.task("test", function(){
