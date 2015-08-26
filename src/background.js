@@ -1,14 +1,47 @@
 // TODO Error handling.
-var JenkinsJob = (function(){
-  var JOB_PREFIX = "job:"
-  function generateKey(jenkinsUrl, jobName){
-    return JOB_PREFIX + JSON.stringify({jenkinsUrl: jenkinsUrl, jobName: jobName});
-  }
-  function isJobKey(key){
-    return key.substring(0, JOB_PREFIX.length) === JOB_PREFIX
-  }
+var JOB_PREFIX = "job:"
+function generateKey(jenkinsUrl, jobName){
+  return JOB_PREFIX + JSON.stringify({jenkinsUrl, jobName});
+}
+function isJobKey(key){
+  return key.substring(0, JOB_PREFIX.length) === JOB_PREFIX
+}
 
-  var klass = function JenkinsJob(jenkinsUrl, jobName){
+var ChromeStorage = {
+  get(key){
+    if(key){
+      return new Promise(function(resolve, reject){
+        chrome.storage.local.get(key, function(item){
+          if(Object.keys(item).length != 0) {
+            resolve(item[key]);
+          } else {
+            reject(Error("NOT FOUND"));
+          }
+        })
+      });
+    } else {
+      return new Promise(function(resolve, reject){
+        chrome.storage.local.get(function(items){resolve(items)});
+      });
+    }
+  },
+  set(key, obj){
+    return new Promise(function(resolve, reject){
+      chrome.storage.local.set({[key]: obj}, function(){
+        resolve();
+      });
+    })
+  },
+  remove(key){
+    return new Promise(function(resolve, reject){
+      chrome.storage.local.remove(key);
+      resolve();
+    });
+  }
+}
+
+class JenkinsJob {
+  constructor(jenkinsUrl, jobName){
     jenkinsUrl = jenkinsUrl.trim();
     jobName = jobName.trim();
     jenkinsUrl = jenkinsUrl.slice(-1) === "/" ? jenkinsUrl : jenkinsUrl + "/";
@@ -16,17 +49,8 @@ var JenkinsJob = (function(){
     this.id = generateKey(jenkinsUrl, jobName);
     this.jenkinsUrl = jenkinsUrl;
     this.jobName = jobName;
-  };
-  chrome.alarms.onAlarm.addListener(function(alarm){
-    if(isJobKey(alarm.name)){
-      JenkinsJob.find(alarm.name)
-        .then(function(job){job.pullStatus();}).catch(Utils.log);
-    }
-  });
-
-  var JobCache = {};
-
-  klass.add = function(jenkinsUrl, jobName){
+  }
+  static add(jenkinsUrl, jobName) {
     var job = new this(jenkinsUrl, jobName);
     var item = {};
     item[job.id] = job;
@@ -41,14 +65,14 @@ var JenkinsJob = (function(){
         }
         // TODO validation.
         // when fail, exec reject function.
-        chrome.storage.local.set(item, function(){
+        ChromeStorage.set(job.id, job).then(function(){
           chrome.alarms.create(job.id, {periodInMinutes: 1});
         });
         resolve(JobCache[job.key] = job);
       });
     });
   }
-  klass.prototype.validate = function(){
+  validate(){
     var result = {}
     if(!this.jenkinsUrl || !this.jenkinsUrl.trim().length) {
       result.jenkinsUrl = result.jenkinsUrl || [];
@@ -72,31 +96,29 @@ var JenkinsJob = (function(){
     return Object.keys(result).length ? result : null;
   }
 
-  klass.find = function(key){
+  static find(key){
     var self = this;
     return new Promise(function(resolve, reject){
       if(JobCache[key]){
         resolve(JobCache[key]);
       }else{
-        chrome.storage.local.get(key, function(item){
-          if(Object.keys(item).length != 0){
-            var data = item[key];
-            var job = new self(data.jenkinsUrl, data.jobName);
-            JobCache[key] = job;
-            resolve(job);
-          } else {
-            reject(Error("NOT FOUND"))
-          }
+        ChromeStorage.get(key).then(function(data){
+          var job = new self(data.jenkinsUrl, data.jobName);
+          JobCache[key] = job;
+          resolve(job);
+        }, function(error){
+          reject(error);
         });
       }
     });
-  };
-  klass.all = function(){
+  }
+
+  static all(){
     var self = this;
     // TODO should get from cache?
     return new Promise(function(resolve, reject){
-      chrome.storage.local.get(function(items){
-        var jobs = []
+      ChromeStorage.get().then((items) => {
+        var jobs = [];
         for(var key in items){
           if(isJobKey(key)){
             var item = items[key];
@@ -104,47 +126,18 @@ var JenkinsJob = (function(){
           }
         }
         resolve(jobs);
-      });
+      }, reject);
     });
-  };
-
-  klass.remove = function(key){
+  }
+  static remove(key){
     return new Promise(function(resolve, reject){
       chrome.alarms.clear(key);
       delete JobCache[key];
-      chrome.storage.local.remove(key);
+      ChromeStorage.remove(key);
       resolve();
     });
-  };
-
-  function BuildStatus(number, result){
-    this.number = number;
-    this.result = result;
   }
-  BuildStatus.prototype.isEq = function(other){
-    return other && this.number === other.number && this.result === other.result;
-  };
-  BuildStatus.fromJenkinsResponse = function(json) {
-    if(json){
-      var number = json.number;
-      var result = json.result;
-      return new this(number, result);
-    }else{
-      return null;
-    }
-  };
-  BuildStatus.prototype.iconUrl = function(){
-    switch(this.result){
-      case "SUCCESS":
-        return "icons/green.png";
-      case "FAILURE":
-        return "icons/red.png";
-      default:
-        return "icons/black.png";
-    }
-  }
-
-  klass.prototype.noticeBuild = function(notifyTargets){
+  noticeBuild(notifyTargets){
     if(notifyTargets.length != 0){
       var key = generateKey(this.jenkinsUrl, this.jobName)
       chrome.notifications.clear(key+"0", function(){})
@@ -171,7 +164,7 @@ var JenkinsJob = (function(){
       }
     }
   }
-  klass.prototype.pullStatus = function(){
+  pullStatus(){
     var buildFields = "[number,result]"
     var queryValue = "tree=lastBuild" + buildFields + ",lastCompletedBuild" + buildFields;
     var apiUrl = this.jenkinsUrl + "job/" + this.jobName + "/api/json?" + queryValue;
@@ -193,53 +186,101 @@ var JenkinsJob = (function(){
       self.noticeBuild(notifyTargets);
     }
     Utils.Xhr.get(apiUrl).then(JSON.parse, Utils.log).then(success_callback);
-  };
-
-  var Utils = {}
-  Utils.log = function(){
-    Array.prototype.slice.call(arguments).forEach(function(_){console.log(_)});
   }
-  Utils.Xhr = {}
-  Utils.Xhr.get = function(url){
-    return new Promise(function(resolve, reject){
-      var req = new XMLHttpRequest();
-      req.open("GET", url);
-      req.onload = function(){
-        if(req.status == 200){
-          resolve(req.response);
-        } else {
-          reject(Error(req.statusText));
-        }
-      }
-      req.onerror = function(){
-        reject(Error("Network Error"));
-      }
-      req.send();
-    });
-  }
-
-  return klass;
-})();
-
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
-  console.log(request)
-  var errorHandling = function(){sendResponse({state: false, result: arguments})};
-  switch(request.action){
-      case "read":
-        var readed = function(jobs){sendResponse({state: true, result: jobs});};
-        JenkinsJob.all().then(readed, errorHandling);
-        return true;
-        break;
-      case "create":
-        var added = function(job){sendResponse({state: true, result: job});};
-        JenkinsJob.add(request.data.jenkinsUrl, request.data.jobName).then(added, errorHandling);
-        return true;
-        break;
-      case "delete":
-        var deleted = function(){sendResponse({state: true});};
-        JenkinsJob.remove(request.data.id).then(deleted, errorHandling);
-
-        return true;
-        break;
+}
+chrome.alarms.onAlarm.addListener(function(alarm){
+  if(isJobKey(alarm.name)){
+    JenkinsJob.find(alarm.name)
+      .then(function(job){job.pullStatus();}).catch(Utils.log);
   }
 });
+
+var JobCache = {};
+
+var Utils = {
+  log(){
+    Array.prototype.slice.call(arguments).forEach(function(_){console.log(_)});
+  },
+  Xhr: {
+    get(url){
+      return new Promise(function(resolve, reject){
+        var req = new XMLHttpRequest();
+        req.open("GET", url);
+        req.onload = function(){
+          if(req.status == 200){
+            resolve(req.response);
+          } else {
+            reject(Error(req.statusText));
+          }
+        }
+        req.onerror = function(){
+          reject(Error("Network Error"));
+        }
+        req.send();
+      });
+    }
+  }
+}
+
+class BuildStatus {
+  constructor(number, result){
+    this.number = number;
+    this.result = result;
+  }
+
+  static fromJenkinsResponse(json) {
+    if(json){
+      var number = json.number;
+      var result = json.result;
+      return new this(number, result);
+    }else{
+      return null;
+    }
+  }
+  isEq(other) {
+    return other &&
+      this.number === other.number &&
+      this.result === other.result;
+  }
+  isSuccess() {
+    return this.result === "SUCCESS";
+  }
+  isFailure() {
+    return this.result === "FAILURE";
+  }
+  iconUrl() {
+    var color = this.isSuccess ? "green" : (this.isFailure ? "red" : "black");
+    return `icons/${color}.png`;
+  }
+}
+
+class JenkinsJobController {
+  constructor(data){
+    this.data = data || {};
+  }
+  read(){
+    return JenkinsJob.all();
+  }
+  create(){
+    return JenkinsJob.add(this.data.jenkinsUrl, this.data.jobName);
+  }
+  destroy(){
+    return JenkinsJob.remove(this.data.id);
+  }
+}
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse){
+  var controller = new JenkinsJobController(request.data);
+  var action_name = request.action == "delete" ? "destroy" : request.action;
+  if(controller[action_name]) {
+    var succeed = function(result){sendResponse({state: true, result: result})}
+    var fail = function(){sendResponse({state: false, result: arguments})}
+    new Promise(function(resolve, reject){
+      resolve(controller[action_name]());
+    }).then(succeed, fail);
+    return true
+  } else {
+    sendResponse({state: false, result: [`Not found action.[${action_name}]`]})
+    return false
+  }
+})
