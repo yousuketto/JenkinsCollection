@@ -1,3 +1,4 @@
+require('babel/register');
 var gulp = require('gulp'),
     mainBowerFiles = require('main-bower-files'),
     concat = require('gulp-concat'),
