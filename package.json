@@ -2,6 +2,7 @@
   "devDependencies": {
     "babelify": "^6.1.2",
     "bower": "^1.4.1",
+    "browserify": "^11.0.1",
     "del": "^1.2.0",
     "gulp": "^3.8.11",
     "gulp-babel": "^5.1.0",
@@ -9,6 +10,8 @@
     "gulp-if": "^1.2.5",
     "gulp-jade": "^1.0.1",
     "gulp-ruby-sass": "^1.0.5",
-    "main-bower-files": "^2.8.0"
+    "main-bower-files": "^2.8.0",
+    "through2": "^2.0.0",
+    "vinyl-source-stream": "^1.1.0"
   }
 }
