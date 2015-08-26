@@ -249,7 +249,7 @@ class BuildStatus {
     return this.result === "FAILURE";
   }
   iconUrl() {
-    var color = this.isSuccess ? "green" : (this.isFailure ? "red" : "black");
+    var color = this.isSuccess() ? "green" : (this.isFailure() ? "red" : "black");
     return `icons/${color}.png`;
   }
 }
