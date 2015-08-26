@@ -10,6 +10,7 @@ var browserify = require('browserify');
 var babelify = require('babelify');
 var source = require('vinyl-source-stream');
 var through2 = require('through2');
+var mocha = require('gulp-mocha');
 
 var vendor_components_dir = "./app/vendor_components";
 var styles_dir = "./app/styles";
@@ -62,6 +63,10 @@ gulp.task("clean:scripts", function(cb){
 });
 gulp.task("scripts", ["clean:scripts"], function(){
   return gulp.src("src/**/*.js").pipe(babelify_compiler()).pipe(gulp.dest(scripts_dir));
+});
+
+gulp.task("test", function(){
+  return gulp.src("test/**/*_test.js").pipe(mocha());
 });
 
 gulp.task("build", ["vendor-files", "styles", "html", "scripts"])
