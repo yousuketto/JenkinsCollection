@@ -7,38 +7,7 @@ function isJobKey(key){
   return key.substring(0, JOB_PREFIX.length) === JOB_PREFIX
 }
 
-var ChromeStorage = {
-  get(key){
-    if(key){
-      return new Promise(function(resolve, reject){
-        chrome.storage.local.get(key, function(item){
-          if(Object.keys(item).length != 0) {
-            resolve(item[key]);
-          } else {
-            reject(Error("NOT FOUND"));
-          }
-        })
-      });
-    } else {
-      return new Promise(function(resolve, reject){
-        chrome.storage.local.get(function(items){resolve(items)});
-      });
-    }
-  },
-  set(key, obj){
-    return new Promise(function(resolve, reject){
-      chrome.storage.local.set({[key]: obj}, function(){
-        resolve();
-      });
-    })
-  },
-  remove(key){
-    return new Promise(function(resolve, reject){
-      chrome.storage.local.remove(key);
-      resolve();
-    });
-  }
-}
+import ChromeStorage from './background/chrome_storage';
 
 class JenkinsJob {
   constructor(jenkinsUrl, jobName){
@@ -66,7 +35,7 @@ class JenkinsJob {
         // TODO validation.
         // when fail, exec reject function.
         ChromeStorage.set(job.id, job).then(function(){
-          chrome.alarms.create(job.id, {periodInMinutes: 1});
+          ChromeAlarm.create(job.id);
         });
         resolve(JobCache[job.key] = job);
       });
@@ -131,7 +100,7 @@ class JenkinsJob {
   }
   static remove(key){
     return new Promise(function(resolve, reject){
-      chrome.alarms.clear(key);
+      ChromeAlarm.clear(key);
       delete JobCache[key];
       ChromeStorage.remove(key);
       resolve();
@@ -140,8 +109,8 @@ class JenkinsJob {
   noticeBuild(notifyTargets){
     if(notifyTargets.length != 0){
       var key = generateKey(this.jenkinsUrl, this.jobName)
-      chrome.notifications.clear(key+"0", function(){})
-      chrome.notifications.clear(key+"1", function(){})
+      ChromeNotifications.clear(key + "0");
+      ChromeNotifications.clear(key + "1");
       if(notifyTargets[1]){
         var target = notifyTargets[1];
         var message = {
@@ -150,7 +119,7 @@ class JenkinsJob {
           message: this.jobName + "  #" + target.number,
           iconUrl: target.iconUrl()
         };
-        chrome.notifications.create(key+"1", message, function(){})
+        ChromeNotifications.create(key + "1", message);
       }
       if(notifyTargets[0]){
         var target = notifyTargets[0];
@@ -160,7 +129,7 @@ class JenkinsJob {
           message: this.jobName + "  #" + target.number,
           iconUrl: target.iconUrl()
         };
-        chrome.notifications.create(key+"0", message, function(){})
+        ChromeNotifications.create(key+"0", message)
       }
     }
   }
@@ -188,11 +157,12 @@ class JenkinsJob {
     Utils.Xhr.get(apiUrl).then(JSON.parse, Utils.log).then(success_callback);
   }
 }
-chrome.alarms.onAlarm.addListener(function(alarm){
-  if(isJobKey(alarm.name)){
-    JenkinsJob.find(alarm.name)
-      .then(function(job){job.pullStatus();}).catch(Utils.log);
-  }
+
+import ChromeNotifications from './background/chrome_notifications';
+import ChromeAlarm from './background/chrome_alarm';
+
+ChromeAlarm.addListener(function(alarm){
+  JenkinsJob.find(alarm.name).then(function(job){job.pullStatus();}).catch(Utils.log);
 });
 
 var JobCache = {};
